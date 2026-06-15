@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Warranty Expiry Alert -->
+    <record id="email_template_warranty_expiry" model="mail.template">
+        <field name="name">IT Asset: Warranty Expiry Alert</field>
+        <field name="model_id" ref="model_it_asset"/>
+        <field name="subject">⚠️ Warranty Expiring: {{ object.name }} ({{ object.asset_tag }})</field>
+        <field name="email_to">{{ (object.employee_id.work_email or '') }}</field>
+        <field name="email_cc">{{ (object.company_id.email or '') }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px;">
+    <h2 style="color: #e65100;">⚠️ Warranty Expiry Notice</h2>
+    <p>The warranty for the following IT asset is expiring soon:</p>
+    <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5;">Asset Tag</td>
+            <td style="padding: 6px;">{{ object.asset_tag }}</td></tr>
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5;">Asset Name</td>
+            <td style="padding: 6px;">{{ object.name }}</td></tr>
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5;">Category</td>
+            <td style="padding: 6px;">{{ object.category_id.name }}</td></tr>
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5;">Serial Number</td>
+            <td style="padding: 6px;">{{ object.serial_number or 'N/A' }}</td></tr>
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5; color:#c62828;">Warranty Expiry</td>
+            <td style="padding: 6px; color:#c62828; font-weight:bold;">
+                {{ object.warranty_expiry_date }}</td></tr>
+        <tr><td style="padding: 6px; font-weight: bold; background:#f5f5f5;">Assigned To</td>
+            <td style="padding: 6px;">{{ object.employee_id.name or 'Unassigned' }}</td></tr>
+    </table>
+    <p style="margin-top:16px;">Please contact the vendor or IT department to arrange renewal or replacement.</p>
+    <hr/>
+    <p style="font-size:12px; color:#777;">This is an automated notification from the IT Asset Management system.</p>
+</div>
+        ]]></field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- AMC Expiry Alert -->
+    <record id="email_template_amc_expiry" model="mail.template">
+        <field name="name">IT AMC: Contract Expiry Alert</field>
+        <field name="model_id" ref="model_it_amc"/>
+        <field name="subject">⚠️ AMC Contract Expiring: {{ object.name }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px;">
+    <h2 style="color: #e65100;">⚠️ AMC Contract Expiry Notice</h2>
+    <p>The following Annual Maintenance Contract is expiring soon:</p>
+    <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Contract Ref</td>
+            <td style="padding:6px;">{{ object.name }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Vendor</td>
+            <td style="padding:6px;">{{ object.vendor_id.name }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5; color:#c62828;">Expiry Date</td>
+            <td style="padding:6px; color:#c62828; font-weight:bold;">{{ object.end_date }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Assets Covered</td>
+            <td style="padding:6px;">{{ object.asset_count }}</td></tr>
+    </table>
+    <p style="margin-top:16px;">Please initiate renewal with the vendor before the contract expires.</p>
+    <hr/>
+    <p style="font-size:12px; color:#777;">Automated notification — IT Asset Management</p>
+</div>
+        ]]></field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Software License Expiry Alert -->
+    <record id="email_template_license_expiry" model="mail.template">
+        <field name="name">IT Software: License Expiry Alert</field>
+        <field name="model_id" ref="model_it_software_license"/>
+        <field name="subject">⚠️ Software License Expiring: {{ object.name }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px;">
+    <h2 style="color: #e65100;">⚠️ Software License Expiry</h2>
+    <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Software</td>
+            <td style="padding:6px;">{{ object.name }} {{ object.version or '' }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Vendor</td>
+            <td style="padding:6px;">{{ object.vendor_id.name or 'N/A' }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">License Type</td>
+            <td style="padding:6px;">{{ object.license_type }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5; color:#c62828;">Expiry Date</td>
+            <td style="padding:6px; color:#c62828; font-weight:bold;">{{ object.expiry_date }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Seats (Used/Total)</td>
+            <td style="padding:6px;">{{ object.used_seats }} / {{ object.total_seats }}</td></tr>
+    </table>
+    <hr/>
+    <p style="font-size:12px; color:#777;">Automated notification — IT Asset Management</p>
+</div>
+        ]]></field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Asset Request Approved -->
+    <record id="email_template_request_approved" model="mail.template">
+        <field name="name">IT Asset Request: Approved</field>
+        <field name="model_id" ref="model_it_asset_request"/>
+        <field name="subject">✅ Your IT Asset Request {{ object.name }} is Approved</field>
+        <field name="email_to">{{ object.employee_id.work_email }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px;">
+    <h2 style="color: #2e7d32;">✅ Asset Request Approved</h2>
+    <p>Dear {{ object.employee_id.name }},</p>
+    <p>Your IT asset request has been <strong>approved</strong>.</p>
+    <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Request Ref</td>
+            <td style="padding:6px;">{{ object.name }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Category Requested</td>
+            <td style="padding:6px;">{{ object.category_id.name }}</td></tr>
+        <tr><td style="padding:6px; font-weight:bold; background:#f5f5f5;">Approved By</td>
+            <td style="padding:6px;">{{ object.approved_by.name }}</td></tr>
+    </table>
+    <p>The IT team will contact you to arrange asset delivery.</p>
+    <hr/>
+    <p style="font-size:12px; color:#777;">Automated notification — IT Asset Management</p>
+</div>
+        ]]></field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Asset Inventory Report Action -->
+    <record id="action_report_it_asset_inventory" model="ir.actions.report">
+        <field name="name">IT Asset Inventory</field>
+        <field name="model">it.asset</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">it_inventory.report_it_asset_inventory</field>
+        <field name="report_file">it_inventory.report_it_asset_inventory</field>
+        <field name="binding_model_id" ref="model_it_asset"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Asset QR / Label Sheet Report -->
+    <record id="action_report_it_asset_labels" model="ir.actions.report">
+        <field name="name">Print Asset Labels / QR Codes</field>
+        <field name="model">it.asset</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">it_inventory.report_it_asset_labels</field>
+        <field name="report_file">it_inventory.report_it_asset_labels</field>
+        <field name="binding_model_id" ref="model_it_asset"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Audit Report -->
+    <record id="action_report_it_audit" model="ir.actions.report">
+        <field name="name">Audit Report</field>
+        <field name="model">it.asset.audit</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">it_inventory.report_it_audit</field>
+        <field name="report_file">it_inventory.report_it_audit</field>
+        <field name="binding_model_id" ref="model_it_asset_audit"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

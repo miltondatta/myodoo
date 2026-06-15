@@ -1,121 +1,391 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- List View -->
+    <!-- ═══════════════════════════════════════════════════════ LIST VIEW -->
     <record id="it_asset_view_list" model="ir.ui.view">
         <field name="name">it.asset.list</field>
         <field name="model">it.asset</field>
         <field name="arch" type="xml">
             <list string="IT Assets"
-                  decoration-success="state == 'available'"
+                  decoration-success="state == 'in_stock'"
                   decoration-info="state == 'assigned'"
-                  decoration-warning="state == 'repair'"
-                  decoration-muted="state == 'retired'">
+                  decoration-warning="state in ('under_repair','damaged')"
+                  decoration-danger="state in ('lost','retired','disposed')"
+                  decoration-muted="state == 'draft'">
+                <field name="asset_tag"/>
                 <field name="name"/>
-                <field name="asset_type"/>
-                <field name="brand"/>
-                <field name="model_number"/>
+                <field name="category_id"/>
+                <field name="brand" optional="hide"/>
+                <field name="model_number" optional="hide"/>
                 <field name="serial_number"/>
-                <field name="assigned_to"/>
+                <field name="employee_id" optional="show"/>
+                <field name="department_id" optional="hide"/>
+                <field name="location_id" optional="hide"/>
+                <field name="warranty_expiry_date" optional="show"/>
+                <field name="warranty_status" widget="badge"
+                       decoration-success="warranty_status == 'valid'"
+                       decoration-warning="warranty_status == 'expiring'"
+                       decoration-danger="warranty_status == 'expired'"
+                       optional="show"/>
+                <field name="purchase_price" optional="hide"/>
+                <field name="current_value" optional="hide"/>
                 <field name="state" widget="badge"
-                       decoration-success="state == 'available'"
-                       decoration-info="state == 'assigned'"
-                       decoration-warning="state == 'repair'"
-                       decoration-danger="state == 'retired'"/>
+                       decoration-muted="state == 'draft'"
+                       decoration-info="state == 'in_stock'"
+                       decoration-primary="state == 'reserved'"
+                       decoration-success="state == 'assigned'"
+                       decoration-warning="state in ('under_repair','returned','damaged')"
+                       decoration-danger="state in ('lost','retired','disposed')"/>
             </list>
         </field>
     </record>
 
-    <!-- Form View -->
+    <!-- ═══════════════════════════════════════════════════════ KANBAN VIEW -->
+    <record id="it_asset_view_kanban" model="ir.ui.view">
+        <field name="name">it.asset.kanban</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile">
+                <field name="state"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_card_header">
+                            <span class="fw-bold">
+                                <field name="asset_tag"/>
+                            </span>
+                            <span class="float-end badge"
+                                  t-attf-class="badge bg-#{record.state.value === 'assigned' ? 'success' : record.state.value === 'in_stock' ? 'info' : 'secondary'}">
+                                <field name="state"/>
+                            </span>
+                        </div>
+                        <div class="o_kanban_card_content">
+                            <div class="fw-bold fs-5"><field name="name"/></div>
+                            <div class="text-muted"><field name="category_id"/></div>
+                            <div t-if="record.employee_id.value">
+                                <i class="fa fa-user me-1" title="Assigned To"/>
+                                <field name="employee_id"/>
+                            </div>
+                            <div t-if="record.warranty_expiry_date.value">
+                                <i class="fa fa-shield me-1" title="Warranty"/>
+                                Warranty: <field name="warranty_expiry_date"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════ FORM VIEW -->
     <record id="it_asset_view_form" model="ir.ui.view">
         <field name="name">it.asset.form</field>
         <field name="model">it.asset</field>
         <field name="arch" type="xml">
             <form string="IT Asset">
                 <header>
-                    <button name="action_set_assigned" string="Assign"
+                    <!-- State transition buttons -->
+                    <button name="action_confirm" string="Confirm to Stock"
                             type="object" class="btn-primary"
-                            invisible="state == 'assigned'"/>
-                    <button name="action_set_repair" string="Send to Repair"
+                            invisible="state != 'draft'"/>
+                    <button name="action_assign" string="Assign"
+                            type="object" class="btn-primary"
+                            invisible="state not in ('in_stock','reserved','returned')"/>
+                    <button name="action_return" string="Return"
                             type="object"
-                            invisible="state in ('repair', 'retired')"/>
-                    <button name="action_set_available" string="Set Available"
+                            invisible="state != 'assigned'"/>
+                    <button name="action_set_under_repair" string="Send to Repair"
                             type="object"
-                            invisible="state in ('available', 'retired')"/>
-                    <button name="action_set_retired" string="Retire"
+                            invisible="state not in ('in_stock','assigned','returned','damaged')"/>
+                    <button name="action_repair_done" string="Repair Done"
+                            type="object" class="btn-primary"
+                            invisible="state != 'under_repair'"/>
+                    <button name="action_reset_to_stock" string="Back to Stock"
                             type="object"
-                            invisible="state == 'retired'"/>
+                            invisible="state not in ('returned','damaged','lost')"/>
+                    <button name="action_set_lost" string="Mark Lost"
+                            type="object"
+                            invisible="state in ('lost','retired','disposed')"/>
+                    <button name="action_set_damaged" string="Mark Damaged"
+                            type="object"
+                            invisible="state in ('damaged','retired','disposed')"/>
+                    <button name="action_retire" string="Retire"
+                            type="object"
+                            invisible="state in ('retired','disposed')"/>
+                    <button name="action_dispose" string="Dispose"
+                            type="object"
+                            invisible="state != 'retired'"
+                            groups="it_inventory.group_it_admin"/>
                     <field name="state" widget="statusbar"
-                           statusbar_visible="available,assigned,repair,retired"/>
+                           statusbar_visible="draft,in_stock,assigned,under_repair,retired"/>
                 </header>
                 <sheet>
-                    <group>
-                        <group string="Asset Information">
-                            <field name="name"/>
-                            <field name="asset_type"/>
-                            <field name="brand"/>
-                            <field name="model_number"/>
-                            <field name="serial_number"/>
-                        </group>
-                        <group string="Assignment &amp; Lifecycle">
-                            <field name="assigned_to"/>
-                            <field name="purchase_date"/>
-                            <field name="warranty_date"/>
-                        </group>
-                    </group>
-                    <group string="Notes">
-                        <field name="notes" nolabel="1"
-                               placeholder="Additional notes about this asset..."/>
-                    </group>
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_maintenance" icon="fa-wrench">
+                            <field name="maintenance_count" string="Repairs" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_software" icon="fa-floppy-o">
+                            <field name="software_count" string="Software" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_requests" icon="fa-ticket"
+                                invisible="request_count == 0">
+                            <field name="request_count" string="Requests" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                                name="action_regenerate_qr" icon="fa-qrcode"
+                                string="Regen QR"
+                                groups="it_inventory.group_it_manager"/>
+                    </div>
+
+                    <!-- Asset Image + QR -->
+                    <div class="row">
+                        <div class="col-auto me-4">
+                            <field name="image" widget="image" class="oe_avatar"/>
+                        </div>
+                        <div class="col-auto" invisible="not qr_code">
+                            <field name="qr_code" widget="image"
+                                   style="max-width:100px; max-height:100px;"/>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <!-- ─── Tab 1: Asset Details ────────────────────────── -->
+                        <page string="Asset Details" name="details">
+                            <group>
+                                <group string="Identity">
+                                    <field name="name"/>
+                                    <field name="asset_tag"/>
+                                    <field name="serial_number"/>
+                                    <field name="barcode" widget="char"/>
+                                </group>
+                                <group string="Classification">
+                                    <field name="category_id"/>
+                                    <field name="asset_type" readonly="1"/>
+                                    <field name="brand"/>
+                                    <field name="model_number"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Technical Specifications">
+                                    <field name="specifications" nolabel="1"
+                                           placeholder="RAM, CPU, Storage, OS…"/>
+                                </group>
+                                <group string="Description">
+                                    <field name="description" nolabel="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─── Tab 2: Assignment ──────────────────────────── -->
+                        <page string="Assignment" name="assignment">
+                            <group>
+                                <group string="Current Assignment">
+                                    <field name="employee_id"/>
+                                    <field name="department_id"/>
+                                    <field name="location_id"/>
+                                    <field name="assignment_date"/>
+                                    <field name="expected_return_date"/>
+                                </group>
+                                <group string="Company">
+                                    <field name="company_id" groups="base.group_multi_company"/>
+                                </group>
+                            </group>
+                            <separator string="Assignment History"/>
+                            <field name="assignment_ids" readonly="1">
+                                <list string="History" decoration-muted="state == 'returned'">
+                                    <field name="assigned_date"/>
+                                    <field name="employee_id"/>
+                                    <field name="department_id"/>
+                                    <field name="condition_on_assign"/>
+                                    <field name="expected_return_date"/>
+                                    <field name="returned_date"/>
+                                    <field name="condition_on_return"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'active'"
+                                           decoration-muted="state == 'returned'"/>
+                                    <field name="duration_days" string="Days"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─── Tab 3: Financial & Warranty ───────────────── -->
+                        <page string="Financial" name="financial">
+                            <group>
+                                <group string="Purchase Info">
+                                    <field name="vendor_id"/>
+                                    <field name="po_id" readonly="1"/>
+                                    <field name="purchase_date"/>
+                                    <field name="purchase_price"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </group>
+                                <group string="Depreciation">
+                                    <field name="depreciation_rate" readonly="1"/>
+                                    <field name="age_years" widget="float"
+                                           digits="[3,1]" readonly="1"/>
+                                    <field name="current_value" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Warranty &amp; Support">
+                                <group>
+                                    <field name="warranty_expiry_date"/>
+                                    <field name="warranty_status" widget="badge"
+                                           decoration-success="warranty_status == 'valid'"
+                                           decoration-warning="warranty_status == 'expiring'"
+                                           decoration-danger="warranty_status == 'expired'"/>
+                                </group>
+                                <group>
+                                    <field name="amc_id"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ─── Tab 4: Software ────────────────────────────── -->
+                        <page string="Software Licenses" name="software">
+                            <field name="software_ids">
+                                <list string="Software">
+                                    <field name="name"/>
+                                    <field name="version"/>
+                                    <field name="license_type"/>
+                                    <field name="expiry_date"/>
+                                    <field name="license_status" widget="badge"
+                                           decoration-success="license_status == 'active'"
+                                           decoration-warning="license_status == 'expiring'"
+                                           decoration-danger="license_status in ('expired','over_limit')"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ─── Tab 5: Notes ───────────────────────────────── -->
+                        <page string="Notes" name="notes">
+                            <field name="notes" nolabel="1"
+                                   placeholder="Internal notes, configuration details, asset history…"/>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
         </field>
     </record>
 
-    <!-- Search View -->
+    <!-- ═══════════════════════════════════════════════════════ SEARCH VIEW -->
     <record id="it_asset_view_search" model="ir.ui.view">
         <field name="name">it.asset.search</field>
         <field name="model">it.asset</field>
         <field name="arch" type="xml">
             <search string="IT Assets">
                 <field name="name"/>
+                <field name="asset_tag"/>
                 <field name="serial_number"/>
-                <field name="assigned_to"/>
-                <filter name="available" string="Available" domain="[('state','=','available')]"/>
+                <field name="barcode"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="category_id"/>
+                <!-- Lifecycle Filters -->
+                <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                <filter name="in_stock" string="In Stock" domain="[('state','=','in_stock')]"/>
                 <filter name="assigned" string="Assigned" domain="[('state','=','assigned')]"/>
-                <filter name="repair" string="Under Repair" domain="[('state','=','repair')]"/>
+                <filter name="under_repair" string="Under Repair" domain="[('state','=','under_repair')]"/>
+                <filter name="lost" string="Lost" domain="[('state','=','lost')]"/>
+                <filter name="damaged" string="Damaged" domain="[('state','=','damaged')]"/>
                 <filter name="retired" string="Retired" domain="[('state','=','retired')]"/>
                 <separator/>
-                <filter name="group_type" string="Asset Type" context="{'group_by': 'asset_type'}"/>
-                <filter name="group_assigned" string="Assigned To" context="{'group_by': 'assigned_to'}"/>
-                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                <!-- Warranty Filters -->
+                <filter name="warranty_expiring" string="Warranty Expiring"
+                        domain="[('warranty_status','=','expiring')]"/>
+                <filter name="warranty_expired" string="Warranty Expired"
+                        domain="[('warranty_status','=','expired')]"/>
+                <separator/>
+                <filter name="my_assets" string="My Assets"
+                        domain="[('employee_id.user_id','=',uid)]"/>
+                <filter name="active" string="Active Assets"
+                        domain="[('state','not in',['retired','disposed'])]"
+                        help="Exclude retired and disposed assets"/>
+                <!-- Group By -->
+                <separator/>
+                <filter name="group_state" string="State"
+                        context="{'group_by':'state'}"/>
+                <filter name="group_category" string="Category"
+                        context="{'group_by':'category_id'}"/>
+                <filter name="group_department" string="Department"
+                        context="{'group_by':'department_id'}"/>
+                <filter name="group_employee" string="Employee"
+                        context="{'group_by':'employee_id'}"/>
+                <filter name="group_location" string="Location"
+                        context="{'group_by':'location_id'}"/>
+                <filter name="group_warranty" string="Warranty Status"
+                        context="{'group_by':'warranty_status'}"/>
             </search>
         </field>
     </record>
 
-    <!-- Window Action -->
-    <record id="it_asset_action" model="ir.actions.act_window">
-        <field name="name">IT Assets</field>
-        <field name="res_model">it.asset</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Add your first IT asset
-            </p>
-            <p>Track computers, laptops, servers, and all other IT equipment.</p>
+    <!-- ═══════════════════════════════════════════════════════ GRAPH VIEW -->
+    <record id="it_asset_view_graph" model="ir.ui.view">
+        <field name="name">it.asset.graph</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <graph string="IT Asset Analytics" type="bar">
+                <field name="category_id" type="row"/>
+                <field name="state" type="col"/>
+            </graph>
         </field>
     </record>
 
-    <!-- Menus -->
-    <menuitem id="it_inventory_menu_root"
-              name="IT Inventory"
-              sequence="100"/>
+    <!-- ═══════════════════════════════════════════════════════ PIVOT VIEW -->
+    <record id="it_asset_view_pivot" model="ir.ui.view">
+        <field name="name">it.asset.pivot</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <pivot string="IT Assets" disable_linking="False">
+                <field name="category_id" type="row"/>
+                <field name="department_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="purchase_price" type="measure"/>
+                <field name="current_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
 
-    <menuitem id="it_inventory_menu_assets"
-              name="Assets"
-              parent="it_inventory_menu_root"
-              action="it_asset_action"
-              sequence="10"/>
+    <!-- ═══════════════════════════════════════════════════════ WINDOW ACTIONS -->
+    <record id="it_asset_action_all" model="ir.actions.act_window">
+        <field name="name">All IT Assets</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,kanban,form,graph,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first IT asset</p>
+            <p>Track every device, license, and piece of equipment across your organisation.</p>
+        </field>
+    </record>
 
+    <record id="it_asset_action_in_stock" model="ir.actions.act_window">
+        <field name="name">Assets In Stock</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('state','in',['in_stock','reserved'])]</field>
+    </record>
+
+    <record id="it_asset_action_assigned" model="ir.actions.act_window">
+        <field name="name">Assigned Assets</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','assigned')]</field>
+    </record>
+
+    <record id="it_asset_action_repair" model="ir.actions.act_window">
+        <field name="name">Assets Under Repair</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','in',['under_repair','damaged'])]</field>
+    </record>
+
+    <record id="it_asset_action_warranty" model="ir.actions.act_window">
+        <field name="name">Warranty Alerts</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('warranty_status','in',['expiring','expired'])]</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
 </odoo>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add IT Asset smart buttons to employee form -->
+    <record id="view_employee_form_it_assets" model="ir.ui.view">
+        <field name="name">hr.employee.form.it.assets</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button class="oe_stat_button" type="object"
+                        name="action_view_it_assets" icon="fa-laptop"
+                        groups="it_inventory.group_it_user">
+                    <field name="it_asset_count" string="IT Assets" widget="statinfo"/>
+                </button>
+                <button class="oe_stat_button" type="object"
+                        name="action_view_it_tickets" icon="fa-ticket"
+                        groups="it_inventory.group_it_user">
+                    <field name="it_ticket_count" string="IT Tickets" widget="statinfo"/>
+                </button>
+            </div>
+            <!-- Onboarding / offboarding buttons (no stored flags — actions open relevant views) -->
+            <field name="departure_reason_id" position="after">
+                <separator string="IT Asset Management" groups="it_inventory.group_it_manager"/>
+                <div groups="it_inventory.group_it_manager">
+                    <button string="IT Onboarding — Create Request"
+                            name="action_it_onboarding" type="object"
+                            class="btn btn-sm btn-secondary"/>
+                    <button string="IT Offboarding — Return Assets"
+                            name="action_it_offboarding" type="object"
+                            class="btn btn-sm btn-warning ms-2"/>
+                </div>
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_asset_request_view_list" model="ir.ui.view">
+        <field name="name">it.asset.request.list</field>
+        <field name="model">it.asset.request</field>
+        <field name="arch" type="xml">
+            <list string="Asset Requests"
+                  decoration-info="state == 'submitted'"
+                  decoration-success="state == 'fulfilled'"
+                  decoration-warning="state == 'approved'"
+                  decoration-danger="state == 'rejected'"
+                  decoration-muted="state in ('cancelled','draft')">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="category_id" string="Category Needed"/>
+                <field name="request_date"/>
+                <field name="required_by_date"/>
+                <field name="priority" widget="priority"/>
+                <field name="asset_id" string="Assigned Asset" optional="show"/>
+                <field name="approved_by" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'"
+                       decoration-warning="state == 'approved'"
+                       decoration-success="state == 'fulfilled'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state in ('draft','cancelled')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_asset_request_view_form" model="ir.ui.view">
+        <field name="name">it.asset.request.form</field>
+        <field name="model">it.asset.request</field>
+        <field name="arch" type="xml">
+            <form string="Asset Request">
+                <header>
+                    <button name="action_submit" string="Submit Request"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Approve"
+                            type="object" class="btn-primary"
+                            invisible="state != 'submitted'"
+                            groups="it_inventory.group_it_manager"/>
+                    <button name="action_reject" string="Reject"
+                            type="object"
+                            invisible="state != 'submitted'"
+                            groups="it_inventory.group_it_manager"/>
+                    <button name="action_fulfil" string="Fulfil Request"
+                            type="object" class="btn-success"
+                            invisible="state != 'approved'"
+                            groups="it_inventory.group_it_manager"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state in ('fulfilled','cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,fulfilled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="department_id" readonly="state != 'draft'"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="category_id" readonly="state != 'draft'"/>
+                            <field name="request_date"/>
+                            <field name="required_by_date"/>
+                            <field name="asset_id"
+                                   domain="[('state','in',['in_stock','reserved','returned']),('category_id','=',category_id)]"
+                                   invisible="state not in ('approved','fulfilled')"
+                                   groups="it_inventory.group_it_manager"/>
+                        </group>
+                    </group>
+                    <group string="Justification">
+                        <field name="purpose" nolabel="1"
+                               placeholder="Business reason for this request…"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                    <group string="Approval" invisible="state not in ('approved','rejected','fulfilled')">
+                        <field name="approved_by" readonly="1"/>
+                        <field name="approved_date" readonly="1"/>
+                        <field name="rejection_reason"
+                               invisible="state != 'rejected'"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_asset_request_action" model="ir.actions.act_window">
+        <field name="name">Asset Requests</field>
+        <field name="res_model">it.asset.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="it_asset_request_action_pending" model="ir.actions.act_window">
+        <field name="name">Pending Requests</field>
+        <field name="res_model">it.asset.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','in',['submitted','approved'])]</field>
+    </record>
+</odoo>

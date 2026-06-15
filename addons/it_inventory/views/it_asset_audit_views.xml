@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_asset_audit_view_list" model="ir.ui.view">
+        <field name="name">it.asset.audit.list</field>
+        <field name="model">it.asset.audit</field>
+        <field name="arch" type="xml">
+            <list string="Asset Audits"
+                  decoration-success="state == 'completed'"
+                  decoration-info="state == 'in_progress'"
+                  decoration-muted="state in ('draft','cancelled')">
+                <field name="name"/>
+                <field name="audit_date"/>
+                <field name="auditor_id"/>
+                <field name="scope"/>
+                <field name="total_assets"/>
+                <field name="verified_count" string="Verified"/>
+                <field name="missing_count" string="Missing" decoration-danger="missing_count > 0"/>
+                <field name="damaged_count" string="Damaged" decoration-warning="damaged_count > 0"/>
+                <field name="completion_rate" string="% Done" widget="progressbar"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'in_progress'"
+                       decoration-success="state == 'completed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_asset_audit_view_form" model="ir.ui.view">
+        <field name="name">it.asset.audit.form</field>
+        <field name="model">it.asset.audit</field>
+        <field name="arch" type="xml">
+            <form string="Asset Audit">
+                <header>
+                    <button name="action_generate_lines" string="Generate Asset List"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_complete" string="Complete Audit"
+                            type="object" class="btn-success"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state in ('completed','cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Audit Info">
+                            <field name="name" readonly="1"/>
+                            <field name="audit_date"/>
+                            <field name="planned_end_date"/>
+                            <field name="actual_end_date" readonly="1"/>
+                        </group>
+                        <group string="Team">
+                            <field name="auditor_id"/>
+                            <field name="auditor_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <group string="Scope">
+                        <field name="scope" widget="radio"/>
+                        <field name="department_id" invisible="scope != 'department'"/>
+                        <field name="location_id" invisible="scope != 'location'"/>
+                        <field name="category_id" invisible="scope != 'category'"/>
+                    </group>
+                    <!-- Progress summary -->
+                    <group string="Progress" invisible="state == 'draft'">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <div class="h3 text-primary">
+                                    <field name="total_assets" readonly="1"/>
+                                </div>
+                                <small>Total</small>
+                            </div>
+                            <div class="col-3">
+                                <div class="h3 text-success">
+                                    <field name="verified_count" readonly="1"/>
+                                </div>
+                                <small>Verified</small>
+                            </div>
+                            <div class="col-3">
+                                <div class="h3 text-danger">
+                                    <field name="missing_count" readonly="1"/>
+                                </div>
+                                <small>Missing</small>
+                            </div>
+                            <div class="col-3">
+                                <div class="h3 text-warning">
+                                    <field name="damaged_count" readonly="1"/>
+                                </div>
+                                <small>Damaged</small>
+                            </div>
+                        </div>
+                        <field name="completion_rate" widget="progressbar" readonly="1"/>
+                    </group>
+                    <!-- Audit Lines -->
+                    <notebook>
+                        <page string="Audit Lines" name="lines">
+                            <field name="audit_line_ids"
+                                   readonly="state == 'completed'">
+                                <list string="Audit Lines" editable="bottom"
+                                      decoration-success="condition == 'good'"
+                                      decoration-danger="condition == 'missing'"
+                                      decoration-warning="condition == 'damaged'"
+                                      decoration-muted="condition == 'pending'">
+                                    <field name="asset_id" readonly="1"/>
+                                    <field name="asset_tag" readonly="1"/>
+                                    <field name="serial_number" readonly="1"/>
+                                    <field name="category_id" readonly="1"/>
+                                    <field name="expected_employee_id" readonly="1"/>
+                                    <field name="found_employee_id"/>
+                                    <field name="expected_location_id" readonly="1"/>
+                                    <field name="found_location_id"/>
+                                    <field name="condition" widget="badge"
+                                           decoration-success="condition == 'good'"
+                                           decoration-warning="condition == 'damaged'"
+                                           decoration-danger="condition == 'missing'"/>
+                                    <field name="remarks"/>
+                                    <button name="action_mark_good" string="" title="Mark Good"
+                                            type="object" icon="fa-check" class="btn-sm btn-success"
+                                            invisible="condition == 'good'"/>
+                                    <button name="action_mark_damaged" string="" title="Mark Damaged"
+                                            type="object" icon="fa-exclamation-triangle" class="btn-sm btn-warning"
+                                            invisible="condition == 'damaged'"/>
+                                    <button name="action_mark_missing" string="" title="Mark Missing"
+                                            type="object" icon="fa-times" class="btn-sm btn-danger"
+                                            invisible="condition == 'missing'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_asset_audit_action" model="ir.actions.act_window">
+        <field name="name">Asset Audits</field>
+        <field name="res_model">it.asset.audit</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

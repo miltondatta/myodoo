@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_amc_view_list" model="ir.ui.view">
+        <field name="name">it.amc.list</field>
+        <field name="model">it.amc</field>
+        <field name="arch" type="xml">
+            <list string="AMC Contracts"
+                  decoration-success="state == 'active'"
+                  decoration-warning="state == 'expiring'"
+                  decoration-danger="state == 'expired'"
+                  decoration-muted="state in ('draft','cancelled')">
+                <field name="name"/>
+                <field name="vendor_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="days_to_expiry" string="Days Left"/>
+                <field name="coverage_type"/>
+                <field name="asset_count" string="Assets"/>
+                <field name="cost"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-warning="state == 'expiring'"
+                       decoration-danger="state == 'expired'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_amc_view_form" model="ir.ui.view">
+        <field name="name">it.amc.form</field>
+        <field name="model">it.amc</field>
+        <field name="arch" type="xml">
+            <form string="AMC Contract">
+                <header>
+                    <button name="action_activate" string="Activate"
+                            type="object" class="btn-primary"
+                            invisible="state not in ('draft',)"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state in ('cancelled','expired')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,active,expiring,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_assets" icon="fa-laptop">
+                            <field name="asset_count" string="Assets" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group string="Contract Details">
+                            <field name="name"/>
+                            <field name="vendor_id"/>
+                            <field name="coverage_type"/>
+                            <field name="po_id"/>
+                        </group>
+                        <group string="Period &amp; Cost">
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="days_to_expiry"/>
+                            <field name="cost"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Covered Assets">
+                            <field name="asset_ids" widget="many2many_tags"/>
+                        </page>
+                        <page string="Terms &amp; Conditions">
+                            <field name="terms" nolabel="1"/>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_amc_action" model="ir.actions.act_window">
+        <field name="name">AMC Contracts</field>
+        <field name="res_model">it.amc</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <record id="it_amc_action_expiring" model="ir.actions.act_window">
+        <field name="name">Expiring AMC Contracts</field>
+        <field name="res_model">it.amc</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', 'in', ['expiring', 'expired'])]</field>
+    </record>
+</odoo>

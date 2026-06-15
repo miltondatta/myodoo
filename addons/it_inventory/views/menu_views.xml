@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ══════════════════════════ ROOT MENU ══════════════════════════════ -->
+    <menuitem id="it_inventory_menu_root"
+              name="IT Assets"
+              sequence="95"
+              web_icon="it_inventory,static/description/icon.png"
+              groups="it_inventory.group_it_user"/>
+
+    <!-- ══════════════════════════ ASSETS ════════════════════════════════ -->
+    <menuitem id="it_menu_assets"
+              name="Assets"
+              parent="it_inventory_menu_root"
+              sequence="10"/>
+
+    <menuitem id="it_menu_assets_all"
+              name="All Assets"
+              parent="it_menu_assets"
+              action="it_asset_action_all"
+              sequence="10"/>
+
+    <menuitem id="it_menu_assets_in_stock"
+              name="In Stock"
+              parent="it_menu_assets"
+              action="it_asset_action_in_stock"
+              sequence="20"/>
+
+    <menuitem id="it_menu_assets_assigned"
+              name="Assigned"
+              parent="it_menu_assets"
+              action="it_asset_action_assigned"
+              sequence="30"/>
+
+    <menuitem id="it_menu_assets_repair"
+              name="Under Repair / Damaged"
+              parent="it_menu_assets"
+              action="it_asset_action_repair"
+              sequence="40"/>
+
+    <menuitem id="it_menu_assets_warranty"
+              name="Warranty Alerts"
+              parent="it_menu_assets"
+              action="it_asset_action_warranty"
+              sequence="50"/>
+
+    <!-- ══════════════════════════ REQUESTS ══════════════════════════════ -->
+    <menuitem id="it_menu_requests"
+              name="Requests"
+              parent="it_inventory_menu_root"
+              sequence="20"/>
+
+    <menuitem id="it_menu_requests_all"
+              name="All Requests"
+              parent="it_menu_requests"
+              action="it_asset_request_action"
+              sequence="10"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_requests_pending"
+              name="Pending Approval"
+              parent="it_menu_requests"
+              action="it_asset_request_action_pending"
+              sequence="20"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_my_requests"
+              name="My Requests"
+              parent="it_menu_requests"
+              action="it_asset_request_action"
+              sequence="30"/>
+
+    <!-- ══════════════════════════ SOFTWARE ══════════════════════════════ -->
+    <menuitem id="it_menu_software"
+              name="Software"
+              parent="it_inventory_menu_root"
+              sequence="30"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_software_licenses"
+              name="Licenses"
+              parent="it_menu_software"
+              action="it_software_license_action"
+              sequence="10"/>
+
+    <menuitem id="it_menu_software_expiring"
+              name="Expiring Licenses"
+              parent="it_menu_software"
+              action="it_software_license_action_expiring"
+              sequence="20"/>
+
+    <!-- ══════════════════════════ CONSUMABLES ════════════════════════════ -->
+    <menuitem id="it_menu_consumables"
+              name="Consumables"
+              parent="it_inventory_menu_root"
+              sequence="40"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_consumables_stock"
+              name="Stock"
+              parent="it_menu_consumables"
+              action="it_consumable_action"
+              sequence="10"/>
+
+    <menuitem id="it_menu_consumables_reorder"
+              name="Reorder Needed"
+              parent="it_menu_consumables"
+              action="it_consumable_action_reorder"
+              sequence="20"/>
+
+    <!-- ══════════════════════════ CONTRACTS ═════════════════════════════ -->
+    <menuitem id="it_menu_contracts"
+              name="Contracts"
+              parent="it_inventory_menu_root"
+              sequence="50"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_amc"
+              name="AMC Contracts"
+              parent="it_menu_contracts"
+              action="it_amc_action"
+              sequence="10"/>
+
+    <menuitem id="it_menu_amc_expiring"
+              name="Expiring AMC"
+              parent="it_menu_contracts"
+              action="it_amc_action_expiring"
+              sequence="20"/>
+
+    <!-- ══════════════════════════ AUDIT ══════════════════════════════════ -->
+    <menuitem id="it_menu_audit"
+              name="Audit"
+              parent="it_inventory_menu_root"
+              sequence="60"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_audits"
+              name="Asset Audits"
+              parent="it_menu_audit"
+              action="it_asset_audit_action"
+              sequence="10"/>
+
+    <!-- ══════════════════════════ SUPPORT ════════════════════════════════ -->
+    <menuitem id="it_menu_support"
+              name="Support"
+              parent="it_inventory_menu_root"
+              sequence="70"/>
+
+    <menuitem id="it_menu_tickets_all"
+              name="All Tickets"
+              parent="it_menu_support"
+              action="it_ticket_action"
+              sequence="10"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_tickets_open"
+              name="Open Tickets"
+              parent="it_menu_support"
+              action="it_ticket_action_open"
+              sequence="20"
+              groups="it_inventory.group_it_manager"/>
+
+    <menuitem id="it_menu_tickets_mine"
+              name="My Tickets"
+              parent="it_menu_support"
+              action="it_ticket_action_mine"
+              sequence="30"/>
+
+    <!-- ══════════════════════════ CONFIGURATION ══════════════════════════ -->
+    <menuitem id="it_menu_config"
+              name="Configuration"
+              parent="it_inventory_menu_root"
+              sequence="100"
+              groups="it_inventory.group_it_admin"/>
+
+    <menuitem id="it_menu_categories"
+              name="Asset Categories"
+              parent="it_menu_config"
+              action="it_asset_category_action"
+              sequence="10"/>
+
+    <menuitem id="it_menu_locations"
+              name="Locations"
+              parent="it_menu_config"
+              action="it_asset_location_action"
+              sequence="20"/>
+</odoo>

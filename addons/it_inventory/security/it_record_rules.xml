@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- IT Users can see all assets but only edit their own requests -->
+    <record id="rule_it_asset_request_own" model="ir.rule">
+        <field name="name">IT Asset Request: Users See Own</field>
+        <field name="model_id" ref="model_it_asset_request"/>
+        <field name="groups" eval="[(4, ref('group_it_user'))]"/>
+        <field name="domain_force">
+            [('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- IT Managers see all requests -->
+    <record id="rule_it_asset_request_manager" model="ir.rule">
+        <field name="name">IT Asset Request: Managers See All</field>
+        <field name="model_id" ref="model_it_asset_request"/>
+        <field name="groups" eval="[(4, ref('group_it_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- IT Users see own tickets -->
+    <record id="rule_it_ticket_own" model="ir.rule">
+        <field name="name">IT Ticket: Users See Own</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="groups" eval="[(4, ref('group_it_user'))]"/>
+        <field name="domain_force">
+            [('employee_id.user_id', '=', user.id)]
+        </field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- IT Managers see all tickets -->
+    <record id="rule_it_ticket_manager" model="ir.rule">
+        <field name="name">IT Ticket: Managers See All</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="groups" eval="[(4, ref('group_it_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+</odoo>

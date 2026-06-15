@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_asset_category_view_list" model="ir.ui.view">
+        <field name="name">it.asset.category.list</field>
+        <field name="model">it.asset.category</field>
+        <field name="arch" type="xml">
+            <list string="Asset Categories">
+                <field name="complete_name"/>
+                <field name="asset_type"/>
+                <field name="depreciation_rate" string="Depr. Rate (%)"/>
+                <field name="useful_life_years" string="Life (yrs)"/>
+                <field name="default_warranty_months" string="Warranty (mo)"/>
+                <field name="asset_count" string="Assets"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_asset_category_view_form" model="ir.ui.view">
+        <field name="name">it.asset.category.form</field>
+        <field name="model">it.asset.category</field>
+        <field name="arch" type="xml">
+            <form string="Asset Category">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_assets" icon="fa-laptop"
+                                invisible="asset_count == 0">
+                            <field name="asset_count" string="Assets" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="asset_type"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Defaults">
+                            <field name="default_warranty_months"/>
+                            <field name="depreciation_rate"/>
+                            <field name="useful_life_years"/>
+                        </group>
+                    </group>
+                    <group string="Integrations">
+                        <group string="Purchase Auto-Create">
+                            <field name="product_category_id"
+                                   help="Assets auto-created when receiving PO products in this category."/>
+                        </group>
+                        <group string="Accounting">
+                            <field name="account_asset_id"/>
+                            <field name="account_depreciation_expense_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_asset_category_action" model="ir.actions.act_window">
+        <field name="name">Asset Categories</field>
+        <field name="res_model">it.asset.category</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_ticket_view_list" model="ir.ui.view">
+        <field name="name">it.ticket.list</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <list string="IT Tickets"
+                  decoration-danger="state == 'new' and priority == '3'"
+                  decoration-warning="state == 'in_progress'"
+                  decoration-success="state == 'resolved'"
+                  decoration-muted="state in ('closed','cancelled')">
+                <field name="reference"/>
+                <field name="priority" widget="priority"/>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="category"/>
+                <field name="asset_id" optional="show"/>
+                <field name="assigned_to"/>
+                <field name="open_date"/>
+                <field name="sla_deadline" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'new'"
+                       decoration-warning="state == 'in_progress'"
+                       decoration-primary="state == 'pending'"
+                       decoration-success="state == 'resolved'"
+                       decoration-muted="state in ('closed','cancelled')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_ticket_view_form" model="ir.ui.view">
+        <field name="name">it.ticket.form</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <form string="IT Support Ticket">
+                <header>
+                    <button name="action_start" string="Start Working"
+                            type="object" class="btn-primary"
+                            invisible="state != 'new'"/>
+                    <button name="action_resolve" string="Mark Resolved"
+                            type="object" class="btn-success"
+                            invisible="state not in ('in_progress','pending')"/>
+                    <button name="action_close" string="Close"
+                            type="object"
+                            invisible="state != 'resolved'"/>
+                    <button name="action_reopen" string="Re-Open"
+                            type="object"
+                            invisible="state not in ('resolved','closed')"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state in ('resolved','closed','cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,in_progress,resolved,closed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="reference" readonly="1"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="asset_id"/>
+                            <field name="assigned_to"
+                                   groups="it_inventory.group_it_manager"/>
+                            <field name="sla_deadline" readonly="1"/>
+                            <field name="resolution_time_hours" readonly="1"
+                                   invisible="state not in ('resolved','closed')"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Issue Description">
+                            <field name="description" nolabel="1"
+                                   placeholder="Describe the issue in detail…"/>
+                        </page>
+                        <page string="Resolution"
+                              invisible="state not in ('in_progress','pending','resolved','closed')">
+                            <field name="resolution" nolabel="1"
+                                   placeholder="Steps taken to resolve…"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_ticket_view_kanban" model="ir.ui.view">
+        <field name="name">it.ticket.kanban</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="state"/>
+                <field name="priority"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_content">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold"><field name="reference"/></span>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div><field name="name"/></div>
+                            <div class="text-muted"><field name="employee_id"/></div>
+                            <div class="text-muted" t-if="record.asset_id.value">
+                                <i class="fa fa-laptop" title="Asset"/> <field name="asset_id"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="it_ticket_action" model="ir.actions.act_window">
+        <field name="name">IT Support Tickets</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+
+    <record id="it_ticket_action_open" model="ir.actions.act_window">
+        <field name="name">Open Tickets</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('state','in',['new','in_progress','pending'])]</field>
+    </record>
+
+    <record id="it_ticket_action_mine" model="ir.actions.act_window">
+        <field name="name">My Tickets</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_id.user_id','=',uid)]</field>
+    </record>
+</odoo>

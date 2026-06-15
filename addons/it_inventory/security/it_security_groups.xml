@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Odoo 19 security group structure:
+          ir.module.category  →  res.groups.privilege  →  res.groups
+        (category_id was REMOVED from res.groups in Odoo 19)
+    -->
+
+    <!-- 1. Module category (for Settings UI grouping) -->
+    <record id="module_category_it_inventory" model="ir.module.category">
+        <field name="name">IT Asset Management</field>
+        <field name="description">Manage IT assets, assignments, software and support tickets.</field>
+        <field name="sequence">200</field>
+    </record>
+
+    <!-- 2. Privilege: the Odoo 19 bridge between category and groups -->
+    <record id="privilege_it_inventory" model="res.groups.privilege">
+        <field name="name">IT Asset Management</field>
+        <field name="sequence">200</field>
+        <field name="category_id" ref="module_category_it_inventory"/>
+        <field name="placeholder">No Access</field>
+    </record>
+
+    <!-- 3. Groups — use privilege_id (not category_id) and user_ids (not users) -->
+
+    <!-- IT User: read assets, raise own requests, view/create own tickets -->
+    <record id="group_it_user" model="res.groups">
+        <field name="name">IT User</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="privilege_it_inventory"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- IT Staff / Manager: full asset ops, approve requests, manage tickets -->
+    <record id="group_it_manager" model="res.groups">
+        <field name="name">IT Staff / Manager</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="privilege_it_inventory"/>
+        <field name="implied_ids" eval="[(4, ref('group_it_user'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root'))]"/>
+    </record>
+
+    <!-- IT Admin: everything above + delete/dispose + configuration -->
+    <record id="group_it_admin" model="res.groups">
+        <field name="name">IT Administrator</field>
+        <field name="sequence">30</field>
+        <field name="privilege_id" ref="privilege_it_inventory"/>
+        <field name="implied_ids" eval="[(4, ref('group_it_manager'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

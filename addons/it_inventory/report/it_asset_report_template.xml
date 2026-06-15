@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════ ASSET INVENTORY REPORT ═══════════════════ -->
+    <template id="report_it_asset_inventory">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>IT Asset Detail Report</h2>
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Asset Tag</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Serial No.</th>
+                                    <th>Assigned To</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Warranty</th>
+                                    <th>Purchase Price</th>
+                                    <th>Book Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><t t-esc="o.asset_tag"/></td>
+                                    <td><strong><t t-esc="o.name"/></strong></td>
+                                    <td><t t-esc="o.category_id.name"/></td>
+                                    <td><t t-esc="o.serial_number or '—'"/></td>
+                                    <td><t t-esc="o.employee_id.name or '—'"/></td>
+                                    <td><t t-esc="o.location_id.complete_name or '—'"/></td>
+                                    <td><span t-att-class="'badge ' + ('bg-success' if o.state == 'assigned' else 'bg-info' if o.state == 'in_stock' else 'bg-secondary')">
+                                        <t t-esc="dict(o._fields['state'].selection).get(o.state, o.state)"/>
+                                    </span></td>
+                                    <td><t t-esc="o.warranty_expiry_date or '—'"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(o.purchase_price) if o.purchase_price else '—'"/></td>
+                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(o.current_value) if o.current_value else '—'"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!-- Technical Specs block if present -->
+                        <t t-if="o.specifications">
+                            <p><strong>Specifications:</strong> <t t-esc="o.specifications"/></p>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════ ASSET LABEL / QR SHEET ═══════════════════ -->
+    <template id="report_it_asset_labels">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <div class="row">
+                        <t t-foreach="docs" t-as="o">
+                            <div class="col-4 mb-3">
+                                <div class="border rounded p-2 text-center" style="height: 130px;">
+                                    <t t-if="o.qr_code">
+                                        <img t-att-src="'data:image/png;base64,' + o.qr_code.decode('utf-8')"
+                                             style="height: 70px; width: 70px;"/>
+                                    </t>
+                                    <div><strong><t t-esc="o.asset_tag"/></strong></div>
+                                    <div style="font-size:9px;"><t t-esc="o.name"/></div>
+                                    <div style="font-size:8px; color:#666;">
+                                        <t t-esc="o.serial_number or ''"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════ AUDIT REPORT ═════════════════════════════ -->
+    <template id="report_it_audit">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>IT Asset Audit Report — <t t-esc="o.name"/></h2>
+                        <table class="table table-sm mb-3">
+                            <tr><th>Audit Date</th><td><t t-esc="o.audit_date"/></td>
+                                <th>Auditor</th><td><t t-esc="o.auditor_id.name"/></td></tr>
+                            <tr><th>Scope</th><td><t t-esc="o.scope"/></td>
+                                <th>Status</th><td><t t-esc="o.state"/></td></tr>
+                            <tr><th>Total Assets</th><td><t t-esc="o.total_assets"/></td>
+                                <th>Completion</th><td><t t-esc="'{:.1f}%'.format(o.completion_rate)"/></td></tr>
+                        </table>
+                        <div class="row text-center mb-3">
+                            <div class="col-3 text-success"><h4><t t-esc="o.verified_count"/></h4>Verified</div>
+                            <div class="col-3 text-danger"><h4><t t-esc="o.missing_count"/></h4>Missing</div>
+                            <div class="col-3 text-warning"><h4><t t-esc="o.damaged_count"/></h4>Damaged</div>
+                            <div class="col-3 text-secondary"><h4><t t-esc="o.pending_count"/></h4>Pending</div>
+                        </div>
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Asset Tag</th>
+                                    <th>Asset Name</th>
+                                    <th>Serial</th>
+                                    <th>Expected With</th>
+                                    <th>Found With</th>
+                                    <th>Condition</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.audit_line_ids" t-as="line">
+                                    <tr t-att-class="'table-success' if line.condition == 'good' else 'table-danger' if line.condition == 'missing' else 'table-warning' if line.condition == 'damaged' else ''">
+                                        <td><t t-esc="line.asset_tag"/></td>
+                                        <td><t t-esc="line.asset_id.name"/></td>
+                                        <td><t t-esc="line.serial_number or '—'"/></td>
+                                        <td><t t-esc="line.expected_employee_id.name or '—'"/></td>
+                                        <td><t t-esc="line.found_employee_id.name or '—'"/></td>
+                                        <td><t t-esc="dict(line._fields['condition'].selection).get(line.condition, line.condition)"/></td>
+                                        <td><t t-esc="line.remarks or ''"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <t t-if="o.notes">
+                            <h4>Findings / Notes</h4>
+                            <p><t t-esc="o.notes"/></p>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

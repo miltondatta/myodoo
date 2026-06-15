@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="it_asset_location_view_list" model="ir.ui.view">
+        <field name="name">it.asset.location.list</field>
+        <field name="model">it.asset.location</field>
+        <field name="arch" type="xml">
+            <list string="Locations">
+                <field name="complete_name"/>
+                <field name="building"/>
+                <field name="floor"/>
+                <field name="room"/>
+                <field name="asset_count" string="Assets"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="it_asset_location_view_form" model="ir.ui.view">
+        <field name="name">it.asset.location.form</field>
+        <field name="model">it.asset.location</field>
+        <field name="arch" type="xml">
+            <form string="IT Location">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_assets" icon="fa-map-marker">
+                            <field name="asset_count" string="Assets" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Physical Details">
+                            <field name="building"/>
+                            <field name="floor"/>
+                            <field name="room"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="stock_location_id"/>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_asset_location_action" model="ir.actions.act_window">
+        <field name="name">Locations</field>
+        <field name="res_model">it.asset.location</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
