@@ -151,6 +151,21 @@ class ItAsset(models.Model):
     maintenance_count = fields.Integer(compute='_compute_counts')
     request_count = fields.Integer(compute='_compute_counts')
 
+    # ── Accounting ────────────────────────────────────────────────────────────
+    move_ids = fields.One2many(
+        'account.move', 'it_asset_id', string='GL Entries'
+    )
+    accounting_entry_count = fields.Integer(
+        string='Journal Entries', compute='_compute_accounting_entry_count'
+    )
+    last_depreciation_date = fields.Date(
+        string='Last Depreciation Posted', readonly=True, copy=False
+    )
+    accumulated_depreciation = fields.Monetary(
+        string='Accumulated Depreciation Posted',
+        currency_field='currency_id', readonly=True, copy=False, default=0.0
+    )
+
     notes = fields.Text(string='Internal Notes')
 
     # ── SQL Constraints ───────────────────────────────────────────────────────
@@ -217,7 +232,6 @@ class ItAsset(models.Model):
 
     def _compute_counts(self):
         Maintenance = self.env['maintenance.request']
-        Software = self.env['it.software.license']
         Request = self.env['it.asset.request']
         for asset in self:
             asset.software_count = len(asset.software_ids)
@@ -227,6 +241,172 @@ class ItAsset(models.Model):
             asset.request_count = Request.search_count(
                 [('asset_id', '=', asset.id)]
             )
+
+    def _compute_accounting_entry_count(self):
+        for asset in self:
+            asset.accounting_entry_count = self.env['account.move'].search_count(
+                [('it_asset_id', '=', asset.id)]
+            )
+
+    # ── Accounting ───────────────────────────────────────────────────────────
+    def _get_depreciation_journal(self):
+        """Return the Miscellaneous journal for the asset's company."""
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'general'),
+            ('company_id', '=', self.company_id.id),
+            ('name', 'not ilike', 'Exchange'),
+            ('name', 'not ilike', 'Cash Basis'),
+        ], limit=1)
+        if not journal:
+            raise UserError(_(
+                "No 'General' type journal found for company '%s'. "
+                "Please create one in Accounting ▸ Configuration ▸ Journals."
+            ) % self.company_id.name)
+        return journal
+
+    def _compute_period_depreciation(self):
+        """Annual depreciation amount using declining balance (same as current_value logic)."""
+        if not self.purchase_price or not self.purchase_date:
+            return 0.0
+        rate = (self.depreciation_rate or 0.0) / 100.0
+        if not rate:
+            return 0.0
+        book_value = self.current_value if self.current_value > 0 else self.purchase_price
+        return round(book_value * rate, 2)
+
+    def action_post_depreciation(self):
+        """Post a depreciation journal entry for the current year's depreciation."""
+        self.ensure_one()
+        cat = self.category_id
+        if not cat.account_depreciation_expense_id:
+            raise UserError(_(
+                "Please set a Depreciation Expense Account on category '%s'."
+            ) % cat.name)
+        if not cat.account_accumulated_depreciation_id and not cat.account_asset_id:
+            raise UserError(_(
+                "Please set an Accumulated Depreciation Account (or Asset Account) "
+                "on category '%s'."
+            ) % cat.name)
+
+        amount = self._compute_period_depreciation()
+        if amount <= 0:
+            raise UserError(_("Depreciation amount is zero. Check the purchase price and rate."))
+
+        credit_account = (
+            cat.account_accumulated_depreciation_id or cat.account_asset_id
+        )
+        journal = self._get_depreciation_journal()
+        today = date.today()
+
+        move = self.env['account.move'].create({
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': today,
+            'ref': _('Depreciation — %s (%s)') % (self.name, self.asset_tag or ''),
+            'company_id': self.company_id.id,
+            'it_asset_id': self.id,
+            'line_ids': [
+                (0, 0, {
+                    'account_id': cat.account_depreciation_expense_id.id,
+                    'name': _('Depreciation — %s') % self.name,
+                    'debit': amount,
+                    'credit': 0.0,
+                }),
+                (0, 0, {
+                    'account_id': credit_account.id,
+                    'name': _('Accumulated Depreciation — %s') % self.name,
+                    'debit': 0.0,
+                    'credit': amount,
+                }),
+            ],
+        })
+        move._post()
+        self.write({
+            'last_depreciation_date': today,
+            'accumulated_depreciation': self.accumulated_depreciation + amount,
+        })
+        self.message_post(
+            body=_("Depreciation entry posted: %s %s (Journal Entry: %s)")
+            % (self.currency_id.symbol, amount, move.name)
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Journal Entry'),
+            'res_model': 'account.move',
+            'res_id': move.id,
+            'view_mode': 'form',
+        }
+
+    def action_post_disposal_entry(self):
+        """Post asset write-off journal entry on disposal."""
+        self.ensure_one()
+        cat = self.category_id
+        if not cat.account_asset_id:
+            raise UserError(_(
+                "Please set an Asset Account on category '%s'."
+            ) % cat.name)
+
+        journal = self._get_depreciation_journal()
+        today = date.today()
+
+        original_cost = self.purchase_price or 0.0
+        acc_dep = self.accumulated_depreciation or 0.0
+        net_book_value = max(0.0, original_cost - acc_dep)
+
+        line_ids = []
+        # CR: Asset Account (remove original cost)
+        if original_cost:
+            line_ids.append((0, 0, {
+                'account_id': cat.account_asset_id.id,
+                'name': _('Asset disposal — %s') % self.name,
+                'debit': 0.0,
+                'credit': original_cost,
+            }))
+        # DR: Accumulated Depreciation (clear accumulated balance)
+        if acc_dep and cat.account_accumulated_depreciation_id:
+            line_ids.append((0, 0, {
+                'account_id': cat.account_accumulated_depreciation_id.id,
+                'name': _('Clear accumulated depreciation — %s') % self.name,
+                'debit': acc_dep,
+                'credit': 0.0,
+            }))
+        # DR: Loss on Disposal for net book value (if any residual)
+        if net_book_value and cat.account_depreciation_expense_id:
+            line_ids.append((0, 0, {
+                'account_id': cat.account_depreciation_expense_id.id,
+                'name': _('Loss on disposal — %s') % self.name,
+                'debit': net_book_value,
+                'credit': 0.0,
+            }))
+
+        if not line_ids:
+            raise UserError(_("No accounting configuration found. Set Asset Account on category."))
+
+        move = self.env['account.move'].create({
+            'move_type': 'entry',
+            'journal_id': journal.id,
+            'date': today,
+            'ref': _('Asset Disposal — %s (%s)') % (self.name, self.asset_tag or ''),
+            'company_id': self.company_id.id,
+            'it_asset_id': self.id,
+            'line_ids': line_ids,
+        })
+        move._post()
+        self.message_post(
+            body=_("Disposal entry posted — Net Book Value: %s %s (Journal Entry: %s)")
+            % (self.currency_id.symbol, net_book_value, move.name)
+        )
+
+    def action_view_journal_entries(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Journal Entries'),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('it_asset_id', '=', self.id)],
+            'context': {'default_it_asset_id': self.id},
+        }
 
     # ── QR Code ───────────────────────────────────────────────────────────────
     def _generate_qr_codes(self):
@@ -344,6 +524,11 @@ class ItAsset(models.Model):
             asset.write({'state': 'disposed'})
             asset.active = False
             asset.message_post(body=_("Asset disposed and archived."))
+            if asset.category_id.account_asset_id:
+                try:
+                    asset.action_post_disposal_entry()
+                except Exception:
+                    pass  # accounting not configured — dispose silently
 
     def action_reset_to_stock(self):
         for asset in self:

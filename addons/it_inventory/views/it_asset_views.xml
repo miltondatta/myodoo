@@ -136,6 +136,12 @@
                             <field name="request_count" string="Requests" widget="statinfo"/>
                         </button>
                         <button class="oe_stat_button" type="object"
+                                name="action_view_journal_entries" icon="fa-book"
+                                groups="it_inventory.group_it_manager"
+                                invisible="accounting_entry_count == 0">
+                            <field name="accounting_entry_count" string="Entries" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
                                 name="action_regenerate_qr" icon="fa-qrcode"
                                 string="Regen QR"
                                 groups="it_inventory.group_it_manager"/>
@@ -241,6 +247,37 @@
                                     <field name="amc_id"/>
                                 </group>
                             </group>
+                        </page>
+
+                        <!-- ─── Tab 4: Accounting ──────────────────────────── -->
+                        <page string="Accounting" name="accounting"
+                              groups="it_inventory.group_it_manager">
+                            <group>
+                                <group string="Posted Depreciation">
+                                    <field name="last_depreciation_date" readonly="1"/>
+                                    <field name="accumulated_depreciation" readonly="1"/>
+                                </group>
+                                <group string="Actions" groups="it_inventory.group_it_manager">
+                                    <button name="action_post_depreciation"
+                                            string="Post Depreciation Entry"
+                                            type="object"
+                                            class="btn btn-secondary"
+                                            invisible="state in ('disposed','retired')"
+                                            help="Post a journal entry for the current annual depreciation. Requires GL accounts set on the asset category."/>
+                                </group>
+                            </group>
+                            <separator string="Journal Entries"/>
+                            <field name="move_ids" readonly="1">
+                                <list string="Journal Entries">
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="ref"/>
+                                    <field name="journal_id"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'posted'"
+                                           decoration-warning="state == 'draft'"/>
+                                </list>
+                            </field>
                         </page>
 
                         <!-- ─── Tab 4: Software ────────────────────────────── -->

@@ -46,8 +46,9 @@
                             <field name="product_category_id"
                                    help="Assets auto-created when receiving PO products in this category."/>
                         </group>
-                        <group string="Accounting">
+                        <group string="Accounting (GL Accounts)">
                             <field name="account_asset_id"/>
+                            <field name="account_accumulated_depreciation_id"/>
                             <field name="account_depreciation_expense_id"/>
                         </group>
                     </group>

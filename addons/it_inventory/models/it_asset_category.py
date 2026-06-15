@@ -48,11 +48,17 @@ class ItAssetCategory(models.Model):
     account_asset_id = fields.Many2one(
         'account.account', string='Asset Account',
         domain="[('account_type', 'in', ['asset_fixed', 'asset_non_current'])]",
-        help='GL account for asset capitalisation.'
+        help='GL account debited when asset is capitalised.'
+    )
+    account_accumulated_depreciation_id = fields.Many2one(
+        'account.account', string='Accumulated Depreciation Account',
+        domain="[('account_type', 'in', ['asset_fixed', 'asset_non_current'])]",
+        help='Contra-asset account credited for periodic depreciation (usually a sub-account of the asset account).'
     )
     account_depreciation_expense_id = fields.Many2one(
         'account.account', string='Depreciation Expense Account',
-        domain="[('account_type', 'in', ['expense', 'expense_depreciation'])]"
+        domain="[('account_type', 'in', ['expense', 'expense_depreciation'])]",
+        help='P&L account debited for each depreciation entry.'
     )
 
     # Purchase integration

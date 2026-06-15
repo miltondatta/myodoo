@@ -135,6 +135,6 @@ class ItAssetRequest(models.Model):
         group = self.env.ref(
             'it_inventory.group_it_manager', raise_if_not_found=False
         )
-        if group and group.users:
-            return group.users[0]
+        if group and group.user_ids:
+            return group.user_ids[0]
         return self.env.user

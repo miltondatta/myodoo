@@ -37,3 +37,5 @@ access_it_ticket_manager,it.ticket.manager,model_it_ticket,it_inventory.group_it
 access_it_ticket_admin,it.ticket.admin,model_it_ticket,it_inventory.group_it_admin,1,1,1,1
 access_it_asset_assign_wizard,it.asset.assign.wizard,model_it_asset_assign_wizard,it_inventory.group_it_manager,1,1,1,1
 access_it_asset_return_wizard,it.asset.return.wizard,model_it_asset_return_wizard,it_inventory.group_it_manager,1,1,1,1
+access_account_move_it_manager,account.move.it_manager,account.model_account_move,it_inventory.group_it_manager,1,1,1,0
+access_account_move_line_it_manager,account.move.line.it_manager,account.model_account_move_line,it_inventory.group_it_manager,1,1,1,0

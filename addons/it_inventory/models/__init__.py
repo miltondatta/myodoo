@@ -12,3 +12,4 @@ from . import purchase_order
 from . import hr_employee
 from . import maintenance_request
 from . import res_config_settings
+from . import account_move
