@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List View -->
+    <record id="it_asset_view_list" model="ir.ui.view">
+        <field name="name">it.asset.list</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <list string="IT Assets"
+                  decoration-success="state == 'available'"
+                  decoration-info="state == 'assigned'"
+                  decoration-warning="state == 'repair'"
+                  decoration-muted="state == 'retired'">
+                <field name="name"/>
+                <field name="asset_type"/>
+                <field name="brand"/>
+                <field name="model_number"/>
+                <field name="serial_number"/>
+                <field name="assigned_to"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'available'"
+                       decoration-info="state == 'assigned'"
+                       decoration-warning="state == 'repair'"
+                       decoration-danger="state == 'retired'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="it_asset_view_form" model="ir.ui.view">
+        <field name="name">it.asset.form</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <form string="IT Asset">
+                <header>
+                    <button name="action_set_assigned" string="Assign"
+                            type="object" class="btn-primary"
+                            invisible="state == 'assigned'"/>
+                    <button name="action_set_repair" string="Send to Repair"
+                            type="object"
+                            invisible="state in ('repair', 'retired')"/>
+                    <button name="action_set_available" string="Set Available"
+                            type="object"
+                            invisible="state in ('available', 'retired')"/>
+                    <button name="action_set_retired" string="Retire"
+                            type="object"
+                            invisible="state == 'retired'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="available,assigned,repair,retired"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Asset Information">
+                            <field name="name"/>
+                            <field name="asset_type"/>
+                            <field name="brand"/>
+                            <field name="model_number"/>
+                            <field name="serial_number"/>
+                        </group>
+                        <group string="Assignment &amp; Lifecycle">
+                            <field name="assigned_to"/>
+                            <field name="purchase_date"/>
+                            <field name="warranty_date"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"
+                               placeholder="Additional notes about this asset..."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="it_asset_view_search" model="ir.ui.view">
+        <field name="name">it.asset.search</field>
+        <field name="model">it.asset</field>
+        <field name="arch" type="xml">
+            <search string="IT Assets">
+                <field name="name"/>
+                <field name="serial_number"/>
+                <field name="assigned_to"/>
+                <filter name="available" string="Available" domain="[('state','=','available')]"/>
+                <filter name="assigned" string="Assigned" domain="[('state','=','assigned')]"/>
+                <filter name="repair" string="Under Repair" domain="[('state','=','repair')]"/>
+                <filter name="retired" string="Retired" domain="[('state','=','retired')]"/>
+                <separator/>
+                <filter name="group_type" string="Asset Type" context="{'group_by': 'asset_type'}"/>
+                <filter name="group_assigned" string="Assigned To" context="{'group_by': 'assigned_to'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="it_asset_action" model="ir.actions.act_window">
+        <field name="name">IT Assets</field>
+        <field name="res_model">it.asset</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add your first IT asset
+            </p>
+            <p>Track computers, laptops, servers, and all other IT equipment.</p>
+        </field>
+    </record>
+
+    <!-- Menus -->
+    <menuitem id="it_inventory_menu_root"
+              name="IT Inventory"
+              sequence="100"/>
+
+    <menuitem id="it_inventory_menu_assets"
+              name="Assets"
+              parent="it_inventory_menu_root"
+              action="it_asset_action"
+              sequence="10"/>
+
+</odoo>
